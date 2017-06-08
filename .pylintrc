@@ -11,4 +11,4 @@
 # it should appear only once).
 # disable=
 
-disable=C0111,C0304
+disable=C0111,C0304,C0301
