@@ -21,5 +21,5 @@ class Playback:
         pass
 
     def load_next_rows(self):
-        if self.next_rows and self.next_rows.more_rows:
+        if not self.next_rows and self.rows.more_rows:
             self.next_rows = self.data_access.read_next_rows()
