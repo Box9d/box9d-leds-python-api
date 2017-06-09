@@ -56,7 +56,6 @@ class Playback:
         web_socket = create_connection("ws://localhost:7890")
 
         response = requests.get(time_reference_url)
-        print(str(response.content))
         server_time = dateparser.parse(json.loads(response.content)['Result'])
         wait = (dateparser.parse(play_at) - server_time).total_seconds()
         print("Video starts in " + str(wait) + " seconds")
