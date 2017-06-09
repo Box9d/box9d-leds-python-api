@@ -2,10 +2,10 @@ import queue
 import time
 import json
 import requests
-import dateparser
 from domain.timer import Timer
 from domain.database.data_access import DataAccess
 from websocket import create_connection
+from dateutil import parser
 
 class Playback:
     def __init__(self, sqlite_connection_string, video_id, frame_rate):
@@ -57,8 +57,8 @@ class Playback:
         web_socket = create_connection("ws://localhost:7890")
 
         response = requests.get(time_reference_url)
-        server_time = dateparser.parse(json.loads(response.content)['Result'])
-        wait = (dateparser.parse(play_at) - server_time).total_seconds()
+        server_time = parser.parse(json.loads(response.content)['Result'])
+        wait = (parser.parse(play_at) - server_time).total_seconds()
         print("Video starts in " + str(wait) + " seconds")
         time.sleep(wait)
 
