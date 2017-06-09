@@ -1,25 +1,80 @@
+import queue
+import time
+import json
+import requests
+import dateparser
+from domain.timer import Timer
 from domain.database.data_access import DataAccess
+from websocket import create_connection
 
 class Playback:
     def __init__(self, sqlite_connection_string, video_id, frame_rate):
 
-        buffer_seconds = 10
-
+        self.buffer_seconds = 10
         self.frame_rate = frame_rate
-        self.data_access = DataAccess(sqlite_connection_string, video_id, frame_rate * buffer_seconds)
-        self.rows = None
-        self.next_rows = None
+        self.buffer_frame_count = round(self.frame_rate * self.buffer_seconds)
+        self.sqlite_connection_string = sqlite_connection_string
+        self.video_id = video_id
+        self.row_queue = queue.Queue(-1)
+        self.total_seconds = 0
+        self.loaded = False
 
     def load_buffer(self):
-        self.rows = self.data_access.read_next_rows()
-        self.next_rows = self.load_next_rows()
+        if self.loaded:
+            return
 
-    def play(self, start_time):
-        pass
+        producer = queue.threading.Thread(target=self.buffer_producer)
+        producer.daemon = True
+        producer.start()
+
+        self.loaded = True
+
+    def buffer_producer(self):
+        data_access = DataAccess(self.sqlite_connection_string, self.video_id, self.buffer_frame_count)
+        self.total_seconds = data_access.number_of_rows / self.frame_rate
+
+        print("Loading buffer")
+        print("Video length: " + str(self.total_seconds) + "s")
+
+        while True:
+            if self.row_queue.qsize() <= self.buffer_frame_count:
+                new_rows = data_access.read_next_rows()
+                for new_row in new_rows.rows:
+                    self.row_queue.put(new_row[0])
+
+                print("Added " + str(len(new_rows.rows)) + " frames to buffer")
+                if not new_rows.more_rows:
+                    print("Buffer has finished - No more frames to add")
+                    break
+
+                print("Waiting to add to buffer...")
+            else:
+                time.sleep(self.buffer_seconds / 4)
+
+    def play(self, play_at, time_reference_url):
+
+        web_socket = create_connection("ws://localhost:7890")
+
+        response = requests.get(time_reference_url)
+        print(str(response.content))
+        server_time = dateparser.parse(json.loads(response.content)['Result'])
+        wait = (dateparser.parse(play_at) - server_time).total_seconds()
+        print("Video starts in " + str(wait) + " seconds")
+        time.sleep(wait)
+
+        timer = Timer()
+        timer.start()
+
+        frames_played = 0
+        print("Starting video!")
+        while timer.elapsed() < self.total_seconds and not self.row_queue.empty():
+            frame = self.row_queue.get()
+            while timer.elapsed() * self.frame_rate < frames_played:
+                web_socket.send(frame)
+            frames_played = frames_played + 1
+
+        timer = None
+        web_socket.close()
 
     def stop(self):
         pass
-
-    def load_next_rows(self):
-        if not self.next_rows and self.rows.more_rows:
-            self.next_rows = self.data_access.read_next_rows()
