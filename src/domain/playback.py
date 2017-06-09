@@ -70,7 +70,7 @@ class Playback:
         while timer.elapsed() < self.total_seconds and not self.row_queue.empty():
             frame = self.row_queue.get()
             while timer.elapsed() * self.frame_rate < frames_played:
-                web_socket.send(frame)
+                web_socket.send_binary(frame)
             frames_played = frames_played + 1
 
         timer = None
