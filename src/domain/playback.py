@@ -18,6 +18,7 @@ class Playback:
         self.row_queue = queue.Queue(-1)
         self.total_seconds = 0
         self.loaded = False
+        self.stop_requested = False
 
     def load_buffer(self):
         if self.loaded:
@@ -27,6 +28,7 @@ class Playback:
         producer.daemon = True
         producer.start()
 
+        self.stop_requested = False
         self.loaded = True
 
     def buffer_producer(self):
@@ -43,16 +45,15 @@ class Playback:
                     self.row_queue.put(new_row[0])
 
                 print("Added " + str(len(new_rows.rows)) + " frames to buffer")
-                if not new_rows.more_rows:
-                    print("Buffer has finished - No more frames to add")
+                if not new_rows.more_rows or self.stop_requested:
+                    print("Buffer has finished")
                     break
 
                 print("Waiting to add to buffer...")
             else:
                 time.sleep(self.buffer_seconds / 4)
 
-    def play(self, play_at, time_reference_url):
-
+    def buffer_consumer(self, play_at, time_reference_url):
         web_socket = create_connection("ws://localhost:7890")
 
         response = requests.get(time_reference_url)
@@ -66,7 +67,9 @@ class Playback:
 
         frames_played = 0
         print("Starting video!")
-        while timer.elapsed() < self.total_seconds and not self.row_queue.empty():
+        while timer.elapsed() < self.total_seconds \
+        and not self.row_queue.empty() \
+        and not self.stop_requested:
             frame = self.row_queue.get()
             while timer.elapsed() * self.frame_rate < frames_played:
                 web_socket.send_binary(frame)
@@ -75,5 +78,11 @@ class Playback:
         timer = None
         web_socket.close()
 
+    def play(self, play_at, time_reference_url):
+        consumer = queue.threading.Thread(target=self.buffer_consumer, args=(play_at, time_reference_url))
+        consumer.daemon = True
+        consumer.start()
+
     def stop(self):
-        pass
+        print("Stopping video ")
+        self.stop_requested = True

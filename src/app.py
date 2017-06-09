@@ -47,7 +47,12 @@ def play_video():
 
 @APP.route('/api/stop', methods=['POST'])
 def stop_video():
-    pass
+    global playback
+    playback.stop()
+
+    return jsonify({
+        'stopped': 'OK'
+    }), 200
 
 if __name__ == '__main__':
     APP.run(debug=True, port=8003, host='0.0.0.0')
