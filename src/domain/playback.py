@@ -1,3 +1,4 @@
+import codecs
 import queue
 import time
 import json
@@ -56,8 +57,9 @@ class Playback:
     def buffer_consumer(self, play_at, time_reference_url):
         web_socket = create_connection("ws://localhost:7890")
 
-        response = requests.get(time_reference_url)
-        server_time = parser.parse(json.loads(response.content)['Result'])
+        response = requests.get(time_reference_url).json()
+
+        server_time = parser.parse(response['Result'])
         wait = (parser.parse(play_at) - server_time).total_seconds()
         print("Video starts in " + str(wait) + " seconds")
         time.sleep(wait)
