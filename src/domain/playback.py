@@ -78,6 +78,9 @@ class Playback:
             frames_played = frames_played + 1
 
         timer = None
+        black_out = self.get_black_out(3000)
+        web_socket.send_binary(black_out)
+        web_socket.send_binary(black_out)
         web_socket.close()
 
     def play(self, play_at, time_reference_url):
@@ -88,3 +91,14 @@ class Playback:
     def stop(self):
         print("Stopping video ")
         self.stop_requested = True
+
+    def get_black_out(self, number_of_pixels):
+        frame = bytearray()
+
+        counter = 0
+        while counter < number_of_pixels:
+            frame.append(0x00)
+            counter += 1
+
+        return frame
+        
