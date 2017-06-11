@@ -9,7 +9,6 @@ click==6.7
 colorama==0.3.2
 html5lib==0.999
 itsdangerous==0.24
-mcpi==0.1.1
 python-apt==0.9.3.12
 python-dateutil==2.6.0
 python-debian==0.1.27
