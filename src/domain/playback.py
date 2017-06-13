@@ -52,7 +52,7 @@ class Playback:
 
                 print("Waiting to add to buffer...")
             else:
-                time.sleep(self.buffer_seconds / 4)
+                time.sleep(1)
 
     def buffer_consumer(self, play_at, time_reference_url):
         web_socket = create_connection("ws://localhost:7890")
