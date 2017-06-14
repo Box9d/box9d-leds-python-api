@@ -11,7 +11,7 @@ from dateutil import parser
 class Playback:
     def __init__(self, sqlite_connection_string, video_id, frame_rate):
 
-        self.buffer_seconds = 30
+        self.buffer_seconds = 45
         self.frame_rate = frame_rate
         self.buffer_frame_count = round(self.frame_rate * self.buffer_seconds)
         self.sqlite_connection_string = sqlite_connection_string
