@@ -1,7 +1,7 @@
 Flask==0.12.2
 Jinja2==2.9.6
 MarkupSafe==1.0
-Pillow==2.6.1
+Pillow==9.0.0
 RPi.GPIO==0.6.2
 Werkzeug==0.12.2
 chardet==2.3.0
